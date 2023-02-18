@@ -1,20 +1,19 @@
-from util.imports import *
-from util.operator import Operator
+from operator import Operator
+
 
 class Merchant(Operator):
-    def __init__(self, name, potential, dp, init_sp, total_sp, skill_duration, redeploy, dp_refund_mod=0.5):
-        super().__init__(name, potential, dp, init_sp, total_sp, skill_duration, redeploy, dp_refund_mod)
-        self.module = False
-
-    def set_module(self, module):
-        self.module = module
-
     def update(self, frame):
-        if math.floor((frame - self.skill_start_frame) / 60) == self.skill_duration:
-            self.using_skill = False
-            self.skill_start_frame = -1
-            self.sp = 0
+        if self.deployed:
+            if self.skill_active:
+                if self.skill_duration_left > 0:
+                    self.skill_duration_left -= 1
+                else:
+                    self.skill_duration_left = 0
+                    self.skill_active = False
+            else:
+                self.current_sp = min(self.total_sp, self.current_sp + 1)
         else:
-            if (frame - self.deployed_frame) % 60 == 0 and frame != self.deployed_frame:
-                self.sp += 1
-        return math.floor(math.floor((frame - self.deployed_frame) / 60) / 3 * -2 if self.module else -3)
+            if self.redeploy_time > 0:
+                self.redeploy_time -= 1
+        if (frame - self.deployed_frame) * 60 // 3 == 0:
+            return -2 if self.module else -3

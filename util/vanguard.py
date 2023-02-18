@@ -1,34 +1,23 @@
-from util.imports import *
-from util.operator import Operator
+from imports import *
+
+from operator import Operator
 
 
 class Vanguard(Operator):
-    def __init__(self, name, potential, dp, init_sp, total_sp, skill_duration, redeploy, dp_refund_mod=0.5):
-        super().__init__(name, potential, dp, init_sp, total_sp, skill_duration, redeploy, dp_refund_mod)
-        self.delay = 0
-        self.instant = False
-        self.skill_dp = 0
-
-    def set_skill(self, dp, instant, delay):
-        self.skill_dp = dp
-        self.instant = instant
-        self.delay = delay
-
     def update(self, frame):
-        if math.floor((frame - self.skill_start_frame) / 60) == self.skill_duration:
-            self.using_skill = False
-            self.skill_start_frame = -1
-            self.sp = 0
-        else:
-            if (frame - self.deployed_frame) % 60 == 0 and frame != self.deployed_frame:
-                self.sp += 1
-        if self.using_skill:
-            if self.instant:
-                if frame == self.skill_start_frame + self.delay:
-                    return self.skill_dp
+        if self.deployed:
+            if self.skill_active:
+                if self.skill_duration_left > 0:
+                    if math.floor(self.skill_duration_left / self.skill_duration * 60) - math.floor(
+                            (self.skill_duration_left - 1) / self.skill_duration * 60):
+                        return 1
+                    self.skill_duration_left -= 1
+                else:
+                    self.skill_duration_left = 0
+                    self.skill_active = False
             else:
-                return math.floor(
-                    self.skill_dp * math.floor((frame - self.skill_start_frame) / 60) / self.skill_duration)
+                self.current_sp = min(self.total_sp, self.current_sp + 1)
         else:
-            return None
-
+            if self.redeploy_time > 0:
+                self.redeploy_time -= 1
+        return 0
